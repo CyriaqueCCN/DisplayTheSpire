@@ -1,0 +1,11 @@
+{
+  "id": "display_the_spire",
+  "name": "DisplayTheSpire",
+  "author": "Syca",
+  "description": "In-run HUD: potion drop chance, shop prices, card reward odds, map node odds, ascension breakdown.",
+  "version": "0.7.1",
+  "has_dll": true,
+  "has_pck": true,
+  "affects_gameplay": false,
+  "dependencies": []
+}

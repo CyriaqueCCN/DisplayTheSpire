@@ -1,0 +1,28 @@
+# Build output
+bin/
+obj/
+
+# PCK staging directory (created by build.sh)
+_pck_staging/
+
+# Compiled mod files (distributed separately via releases)
+*.pck
+*.pdb
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+
+# IDE
+.idea/
+.vs/
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Refs
+docs/

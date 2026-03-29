@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>display_the_spire</AssemblyName>
+    <RootNamespace>DisplayTheSpire</RootNamespace>
+    <Version>0.1.0</Version>
+    <NoWarn>CS0436;CS0618</NoWarn>
+    <!-- Default STS2DataDir: standard Steam install on Windows.
+         Override on the command line if the game is installed elsewhere:
+           dotnet build -p:STS2DataDir="D:\Games\STS2\data_sts2_windows_x86_64" -->
+    <STS2DataDir Condition="'$(STS2DataDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\data_sts2_windows_x86_64</STS2DataDir>
+  </PropertyGroup>
+
+  <Target Name="CheckSTS2Dir" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(STS2DataDir)\sts2.dll')"
+           Text="STS2DataDir '$(STS2DataDir)' not found. Override with: dotnet build -p:STS2DataDir=&quot;...&quot;" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="GodotSharp">
+      <HintPath>$(STS2DataDir)\GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="sts2">
+      <HintPath>$(STS2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(STS2DataDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
