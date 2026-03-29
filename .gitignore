@@ -26,3 +26,6 @@ Thumbs.db
 
 # Refs
 docs/
+
+# Release files
+releases/
