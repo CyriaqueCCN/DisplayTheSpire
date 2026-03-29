@@ -14,6 +14,15 @@
     <STS2DataDir Condition="'$(STS2DataDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\data_sts2_windows_x86_64</STS2DataDir>
   </PropertyGroup>
 
+  <!-- Release builds ship no debug info.
+       Without this, the DLL's PE header contains a CodeView entry with the full
+       local path to the .pdb file (e.g. C:\Users\<you>\...\display_the_spire.pdb),
+       which leaks the build machine's filesystem layout into the distributed binary. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
   <Target Name="CheckSTS2Dir" BeforeTargets="ResolveAssemblyReferences">
     <Error Condition="!Exists('$(STS2DataDir)\sts2.dll')"
            Text="STS2DataDir '$(STS2DataDir)' not found. Override with: dotnet build -p:STS2DataDir=&quot;...&quot;" />
