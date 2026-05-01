@@ -15,6 +15,8 @@ public static class TopBarMapPatch
 {
     private static IRunState?        _runState;
     private static NTopBarMapButton? _mapButton;
+    private static NTopBar?          _topBar;
+    private static DtsModal?         _modal;
     private static readonly DtsNativeTip _tip = new();
 
     [HarmonyPatch(typeof(NTopBar), nameof(NTopBar.Initialize))]
@@ -25,7 +27,9 @@ public static class TopBarMapPatch
         {
             if (runState.Players.Count == 0) return;
             _runState  = runState;
+            _topBar    = __instance;
             _mapButton = __instance.Map;
+            _mapButton.GuiInput += OnMapGuiInput;
         }
         catch (Exception e) { ModLog.Error("TopBarMapPatch.AfterTopBarInitialize", e); }
     }
@@ -34,8 +38,36 @@ public static class TopBarMapPatch
     [HarmonyPostfix]
     private static void AfterTopBarExitTree()
     {
-        try { _tip.Hide(); _runState = null; _mapButton = null; }
+        try
+        {
+            _tip.Hide();
+            if (_mapButton != null && GodotObject.IsInstanceValid(_mapButton))
+                _mapButton.GuiInput -= OnMapGuiInput;
+            _modal?.Close();
+            _runState  = null;
+            _mapButton = null;
+            _topBar    = null;
+            _modal     = null;
+        }
         catch (Exception e) { ModLog.Error("TopBarMapPatch.AfterTopBarExitTree", e); }
+    }
+
+    // Right-click on the map button opens the event overview modal
+    private static void OnMapGuiInput(InputEvent @event)
+    {
+        try
+        {
+            if (@event is not InputEventMouseButton mb || !mb.Pressed
+                || mb.ButtonIndex != MouseButton.Right) return;
+            if (_runState == null || _topBar == null
+                || !GodotObject.IsInstanceValid(_topBar)) return;
+
+            _mapButton?.AcceptEvent();
+            _modal?.Close();
+            _modal = EventOverviewModal.Show(_topBar, _runState);
+            _modal.Closed += () => _modal = null;
+        }
+        catch (Exception e) { ModLog.Error("TopBarMapPatch.OnMapGuiInput", e); }
     }
 
     [HarmonyPatch(typeof(NTopBarMapButton), "OnFocus")]
@@ -63,9 +95,9 @@ public static class TopBarMapPatch
         int tre = Pct(Math.Max(0f, odds.TreasureOdds));
         int shp = Pct(Math.Max(0f, odds.ShopOdds));
 
-        // Each row is a centered line - the whole block is centered within the tooltip.
-        // The tooltip width is driven by the title; centering each row makes the content
-        // symmetrically placed regardless of label/value width differences.
+        // Each row is centered. Tooltip width is set by the title, so
+        // centering each row keeps content symmetrical regardless of
+        // label-vs-value length.
         return
             "\n" +
             Row("[color=#8888CC]Event[/color]",    ev,  "#8888CC")   + "\n" +

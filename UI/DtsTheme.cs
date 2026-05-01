@@ -5,6 +5,7 @@ namespace DisplayTheSpire.UI;
 internal static class DtsTheme
 {
     // Colors
+    public static readonly Color White         = new Color("FFFFFF");
     public static readonly Color Cream         = new Color("FFF6E2");
     public static readonly Color KeyLabel      = new Color("7A8FA8");
     public static readonly Color Outline       = new Color("18282F");
@@ -12,18 +13,22 @@ internal static class DtsTheme
     public static readonly Color SeparatorLine = new Color(1f, 0.965f, 0.886f, 0.35f);
     public static readonly Color Border        = new Color(1f, 0.965f, 0.886f, 0.18f);
     public static readonly Color EliteYellow   = new Color("E8C840");
+    // Past act, unseen: gone for the rest of the run.
+    public static readonly Color MissedEvent   = new Color("445566");
+    // Future act or prereqs not met: blocked but still potentially reachable.
+    public static readonly Color FutureEvent   = new Color("B89A58");
 
-    // Textures
+    // Backdrop texture used by the potion-chance widget.
     public const string BackdropTexture = "res://images/atlases/ui_atlas.sprites/top_bar/top_bar_char_backdrop.tres";
     public const int    BackdropPatch   = 32;
 
-    // Tooltip dimensions / padding
+    // Tooltip dimensions and padding.
     public const int   CornerRadius  = 10;
     public const float TooltipAlpha  = 0.97f;
     public const float TooltipPadH   = 16f;
     public const float TooltipPadV   = 12f;
 
-    // Font sizes
+    // Font sizes.
     public const int FontSizeTitle      = 32;
     public const int FontSizeValue      = 15;
     public const int FontSizeKey        = 13;
@@ -31,11 +36,12 @@ internal static class DtsTheme
     public const int OutlineSizeLarge   = 12;
     public const int OutlineSizeSmall   = 6;
 
-    // Z-indices (modals only - widgets use default z=0 to stay under NTransition overlay)
+    // Z-indices for modal layers. Widgets sit at the default z=0 so the
+    // game's NTransition fade overlay covers them during scene swaps.
     public const int ZModalBackdrop = 99;
     public const int ZModalPanel    = 100;
 
-    // Modal
+    // Modal sizing and animation.
     public const float ModalBackdropAlpha = 0.6f;
     public const float ModalFadeDuration  = 0.25f;
     public const int   ModalTitleFontSize = 18;

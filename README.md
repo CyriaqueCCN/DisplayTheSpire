@@ -135,6 +135,7 @@ display_the_spire/
 ├── Logging/ModLog.cs            # structured log wrapper
 ├── build.sh                     # build + package + deploy script
 ├── display_the_spire.csproj
+├── display_the_spire.pck        # Godot package to be bundled with the DLL
 └── mod_manifest.json
 ```
 

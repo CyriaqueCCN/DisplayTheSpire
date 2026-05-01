@@ -6,7 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>display_the_spire</AssemblyName>
     <RootNamespace>DisplayTheSpire</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.7.11</Version>
     <NoWarn>CS0436;CS0618</NoWarn>
     <!-- Default STS2DataDir: standard Steam install on Windows.
          Override on the command line if the game is installed elsewhere:
@@ -14,7 +14,10 @@
     <STS2DataDir Condition="'$(STS2DataDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\data_sts2_windows_x86_64</STS2DataDir>
   </PropertyGroup>
 
-  <!-- Strip debug info from release builds -->
+  <!-- Release builds ship no debug info.
+       Without this, the DLL's PE header contains a CodeView entry with the full
+       local path to the .pdb file (e.g. C:\Users\<you>\...\display_the_spire.pdb),
+       which leaks the build machine's filesystem layout into the distributed binary. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>

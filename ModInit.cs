@@ -23,4 +23,22 @@ public static class ModInit
             ModLog.Error("Harmony PatchAll failed", e);
         }
     }
+
+    // The game has no mod-shutdown hook, so this is never invoked in
+    // normal operation. Kept for hot-reload harnesses and debug tooling.
+    // UnpatchAll scoped by HarmonyId only removes patches owned by this
+    // mod, so other mods patching the same targets are not affected.
+    public static void Shutdown()
+    {
+        try
+        {
+            _harmony?.UnpatchAll(DtsConst.HarmonyId);
+            _harmony = null;
+            ModLog.Info("Shutdown - Harmony patches removed");
+        }
+        catch (Exception e)
+        {
+            ModLog.Error("Harmony UnpatchAll failed", e);
+        }
+    }
 }

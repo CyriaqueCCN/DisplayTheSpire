@@ -56,11 +56,20 @@ public static class TopBarDeckPatch
     [HarmonyPostfix]
     private static void AfterDeckUnfocus() { try { _tip.Hide(); } catch { } }
 
-    // CardRarityOdds.RegularRareOdds and EliteRareOdds are static properties that already
-    // call AscensionHelper.GetValueIfAscension(AscensionLevel.Scarcity, ...) internally,
-    // so Ascension 7 (Scarcity) is accounted for automatically.
-    // The pity accumulation is reflected in CurrentValue (= offset), so the displayed odds
-    // already include pity
+    // RegularRareOdds and EliteRareOdds resolve through
+    // AscensionHelper.GetValueIfAscension(Scarcity, ...) on every access,
+    // so Scarcity is handled automatically. CurrentValue is the pity
+    // offset: starts at -0.05, gains +0.01 per non-rare fight, and resets
+    // to -0.05 after any rare or boss. The offset only adds to the rare
+    // threshold; uncommon probability is fixed at regularUncommonOdds=0.37
+    // and eliteUncommonOdds=0.40.
+    //
+    // regularUncommonOdds and eliteUncommonOdds are const, so the C#
+    // compiler inlines their values at build time. A future game-side
+    // rebalance would require a mod recompile rather than a hot pickup.
+    // The constants are still referenced by name so a grep lands here,
+    // and any rename or removal surfaces as a build error rather than
+    // a silent drift between the displayed table and the live odds.
     private static string BuildBbcode()
     {
         var player = _runState!.Players[0];
@@ -68,14 +77,14 @@ public static class TopBarDeckPatch
 
         float regRare    = Math.Max(0f, CardRarityOdds.RegularRareOdds + offset);
         float eliRare    = Math.Max(0f, CardRarityOdds.EliteRareOdds   + offset);
-        const float regUncommon = 0.37f;
-        const float eliUncommon = 0.40f;
+        float regUncommon = CardRarityOdds.regularUncommonOdds;
+        float eliUncommon = CardRarityOdds.eliteUncommonOdds;
         float regCommon  = Math.Max(0f, 1f - regRare - regUncommon);
         float eliCommon  = Math.Max(0f, 1f - eliRare - eliUncommon);
 
-        const string rareHex = "#E8C840"; // gold - matches game rare card frame
-        const string ucHex   = "#3080E8"; // blue - matches game uncommon card frame
-        const string cmHex   = "#C8C8C8"; // light gray - common tier
+        const string rareHex = "#E8C840"; // matches the rare card frame
+        const string ucHex   = "#3080E8"; // matches the uncommon card frame
+        const string cmHex   = "#C8C8C8"; // common tier
         const string hdrHex  = "#7A8FA8"; // muted header
 
         const string p = "\u00A0\u00A0\u00A0";

@@ -7,16 +7,14 @@ using MegaCrit.Sts2.Core.Runs;             // IRunState
 using DisplayTheSpire.Logging;
 using DisplayTheSpire.UI;
 
-// NTopBar is in MegaCrit.Sts2.Core.Nodes.TopBar 
-// NTopBarPortraitTip is in MegaCrit.sts2.Core.Nodes.TopBar
-// Both are referenced via fully-qualified names in typeof() to avoid namespace collision.
+// NTopBar lives in MegaCrit.Sts2.Core.Nodes.CommonUi 
+// NTopBarPortraitTip lives in MegaCrit.sts2.Core.Nodes.TopBar 
+// Both are referenced via fully-qualified names to avoid ambiguity
 
 namespace DisplayTheSpire.Patches;
 
-/// <summary>
-/// When Ascension > 0, replaces the native portrait hover tip with an enriched
-/// version that shows both the name and description of each active ascension level.
-/// </summary>
+// Replaces the native portrait tooltip with one that lists the name and
+// description of every active ascension level when AscensionLevel > 0
 [HarmonyPatch]
 public static class TopBarAscensionPatch
 {
@@ -41,7 +39,8 @@ public static class TopBarAscensionPatch
     [HarmonyPostfix]
     private static void AfterPortraitInit(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip __instance)
     {
-        _portrait = __instance;
+        try { _portrait = __instance; }
+        catch (Exception e) { ModLog.Error("TopBarAscensionPatch.AfterPortraitInit", e); }
     }
 
     [HarmonyPatch(typeof(MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar),
@@ -53,7 +52,7 @@ public static class TopBarAscensionPatch
         catch (Exception e) { ModLog.Error("TopBarAscensionPatch.AfterTopBarExitTree", e); }
     }
 
-    [HarmonyPatch(typeof(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip), "OnHovered")]
+    [HarmonyPatch(typeof(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip), "OnFocus")]
     [HarmonyPostfix]
     private static void AfterPortraitHovered(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip __instance)
     {
@@ -67,7 +66,7 @@ public static class TopBarAscensionPatch
         catch (Exception e) { ModLog.Error("TopBarAscensionPatch.AfterPortraitHovered", e); }
     }
 
-    [HarmonyPatch(typeof(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip), "OnUnhovered")]
+    [HarmonyPatch(typeof(MegaCrit.sts2.Core.Nodes.TopBar.NTopBarPortraitTip), "OnUnfocus")]
     [HarmonyPostfix]
     private static void AfterPortraitUnhovered() { try { _tip.Hide(); } catch { } }
 

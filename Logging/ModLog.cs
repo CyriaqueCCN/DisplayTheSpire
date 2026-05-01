@@ -15,6 +15,8 @@ internal static class ModLog
     public static void Error(string message, Exception ex) => Log.Error($"{Prefix} {message}: {ex}");
     public static void Debug(string message) => Log.Debug($"{Prefix} {message}");
 
+    // Pulls the version baked into the assembly so log lines stay in sync
+    // with the csproj without a manual constant to bump
     private static string ResolveVersion()
     {
         try

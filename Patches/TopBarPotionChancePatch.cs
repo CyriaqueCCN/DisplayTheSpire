@@ -9,39 +9,34 @@ using DisplayTheSpire.UI;
 
 namespace DisplayTheSpire.Patches;
 
-/// <summary>
-/// Potion drop chance widget - injects a styled panel into NTopBar showing
-/// the current potion drop chance, with a tooltip displaying cumulative-drop
-/// projections for the next 2–5 fights.
-/// </summary>
+// Potion drop chance widget. Injects a styled panel into NTopBar showing
+// the current drop chance and a tooltip with cumulative-drop projections
+// for the next 2-5 fights.
 [HarmonyPatch]
 public static class TopBarPotionChancePatch
 {
-    // Refs
     private static Control?          _widgetRoot;
     private static Label?            _label;
     private static readonly DtsNativeTip _tip = new();
 
-    // Dimensions
     private const float PanelW         = 130f;
     private const float PanelH         = 71f;
     private const float PanelTopOffset = 4f;
     private const float IconPx         = 36f;
     private const int   ContentMarginH = 10;
     private const int   ContentMarginV = 4;
-    private const float GapPx          = 4f;   // gap between widget right edge and RightAlignedStuff
+    private const float GapPx          = 4f;   // gap between widget and RightAlignedStuff
 
-    // Slide-aside animation (when "Game saved" text appears)
+    // Slide-aside animation. NSaveIndicator runs ~3 s of "Game saved"
+    // text; the hold matches that minus the two 0.3 s slide phases.
     private const float SlideDuration     = 0.30f;
-    private const float SlideHoldDuration = 2.40f; // NSaveIndicator total 3 s − 2x0.3 s slides
+    private const float SlideHoldDuration = 2.40f;
     private static float  _baseOffsetRight;
     private static float  _baseOffsetLeft;
     private static float  _saveIndicatorWidth;
     private static Tween? _slideTween;
 
     private const string PotionIconPath = "res://images/atlases/potion_atlas.sprites/block_potion.tres";
-
-    // Patch 1: inject on Initialize
 
     [HarmonyPatch(typeof(NTopBar), nameof(NTopBar.Initialize))]
     [HarmonyPostfix]
@@ -54,10 +49,10 @@ public static class TopBarPotionChancePatch
             var player      = runState.Players[0];
             float initValue = player.PlayerOdds.PotionReward.CurrentValue;
 
-            // Build widget
-            // ZIndex left at default (0) so NTransition's fade overlay covers
-            // the widget during the menu->game transition - same logic as native
-            // NTopBar children. Visible=false until positioned below.
+            // ZIndex stays at the default 0 so NTransition's fade overlay
+            // covers the widget during the menu-to-game scene swap, the
+            // same way native NTopBar children behave. Visible=false
+            // until positioning completes below.
             var root = _widgetRoot = new Control
             {
                 CustomMinimumSize = new Vector2(PanelW, PanelH),
@@ -120,7 +115,6 @@ public static class TopBarPotionChancePatch
             RefreshLabel(label, initValue);
             _label = label;
 
-            // Wire hover
             root.MouseEntered += () =>
             {
                 if (_widgetRoot == null || !GodotObject.IsInstanceValid(_widgetRoot)) return;
@@ -131,10 +125,10 @@ public static class TopBarPotionChancePatch
             };
             root.MouseExited += () => _tip.Hide();
 
-            // Inject into NTopBar synchronously
-            // Positioned using RightAlignedStuff.OffsetLeft (a raw .tscn constant
-            // that is valid before any layout pass). Visible=true in the same frame
-            // so the widget fades in with the rest of NTopBar under NTransition.
+            // Inject into NTopBar synchronously. Position uses the raw
+            // RightAlignedStuff.OffsetLeft from the .tscn, which is valid
+            // before any layout pass. Visible=true in the same frame so
+            // the widget fades in alongside NTopBar under NTransition.
             __instance.AddChild(root);
 
             var ras = TopBarHelper.FindControl(__instance, "RightAlignedStuff");
@@ -149,7 +143,9 @@ public static class TopBarPotionChancePatch
             }
             else
             {
-                // Fallback: fixed right-anchor offset.
+                // Fixed right-anchor offset when RightAlignedStuff cannot
+                // be located (defensive: should not happen on supported
+                // game versions).
                 root.AnchorLeft   = root.AnchorRight = 1f;
                 root.OffsetRight  = -200f;
                 root.OffsetLeft   = root.OffsetRight - PanelW;
@@ -160,7 +156,8 @@ public static class TopBarPotionChancePatch
             _baseOffsetLeft  = root.OffsetLeft;
             root.Visible = true;
 
-            // Defer only the SaveIndicator width which requires a completed layout pass.
+            // Defer only the SaveIndicator width measurement: it requires
+            // a completed layout pass to resolve.
             Callable.From(new Action(() =>
             {
                 try
@@ -181,15 +178,13 @@ public static class TopBarPotionChancePatch
         catch (Exception e) { ModLog.Error("AfterTopBarInitialize", e); }
     }
 
-    // Patch 2: refresh after each potion roll
-
     [HarmonyPatch(typeof(PotionRewardOdds), nameof(PotionRewardOdds.Roll))]
     [HarmonyPostfix]
     private static void AfterPotionRoll(PotionRewardOdds __instance, bool __result)
     {
         try
         {
-            if (__result) DtsRunData.PotionsDropped++;
+            if (__result) DtsRunData.IncrementPotionsDropped();
             if (_label == null || !GodotObject.IsInstanceValid(_label)) return;
             RefreshLabel(_label, __instance.CurrentValue);
             if (_tip.IsVisible)
@@ -197,8 +192,6 @@ public static class TopBarPotionChancePatch
         }
         catch (Exception e) { ModLog.Error("AfterPotionRoll", e); }
     }
-
-    // Patch 3: cleanup on run end
 
     [HarmonyPatch(typeof(NTopBar), nameof(NTopBar._ExitTree))]
     [HarmonyPostfix]
@@ -218,8 +211,8 @@ public static class TopBarPotionChancePatch
         catch (Exception e) { ModLog.Error("AfterTopBarExitTree", e); }
     }
 
-    // Patch 4: slide widget aside when "Game saved" text appears
-
+    // Slides the widget aside when "Game saved" appears so the two
+    // elements do not collide on the right side of the bar.
     [HarmonyPatch(typeof(NSaveIndicator), "SavedGame")]
     [HarmonyPostfix]
     private static void AfterGameSaved()
@@ -229,11 +222,11 @@ public static class TopBarPotionChancePatch
             if (_widgetRoot == null || !GodotObject.IsInstanceValid(_widgetRoot)) return;
             if (_saveIndicatorWidth <= 0f) return;
 
-            // Kill any in-progress slide
             _slideTween?.Kill();
             _slideTween = _widgetRoot.CreateTween();
 
-            // Slide left to make room (matches NSaveIndicator's 0.5 s lead-in)
+            // Slide left to make room. NSaveIndicator has a 0.5 s lead-in
+            // before its own text appears; this duration matches it.
             _slideTween
                 .TweenProperty(_widgetRoot, "offset_right",
                     _baseOffsetRight - _saveIndicatorWidth, SlideDuration)
@@ -256,8 +249,6 @@ public static class TopBarPotionChancePatch
         catch (Exception e) { ModLog.Error("AfterGameSaved", e); }
     }
 
-    // BBcode builder
-
     private static string BuildBbcode(float cv)
     {
         float p2 = CumulativeDropChance(cv, 2);
@@ -274,12 +265,11 @@ public static class TopBarPotionChancePatch
             Row("#FFF6E2", 3, ColorHex(PotionChanceColor(p3)), (int)Math.Round(p3 * 100)) + "\n" +
             Row("#FFF6E2", 4, ColorHex(PotionChanceColor(p4)), (int)Math.Round(p4 * 100)) + "\n" +
             Row("#FFF6E2", 5, ColorHex(PotionChanceColor(p5)), (int)Math.Round(p5 * 100)) + "\n" +
-            $"\n[center][font_size=11][color=#7A8FA8]Dropped this run   [color=#FFF6E2]{DtsRunData.PotionsDropped}[/color][/color][/font_size][/center]";
+            $"\n[center][font_size=11][color=#7A8FA8]Dropped this run   [color=#FFF6E2]{DtsRunData.PotionsDropped}[/color][/color][/font_size][/center]" +
+            "\n[center][font_size=11][color=#7A8FA8]Elite rooms add [color=#FFF6E2]+12.5%[/color] at roll time[/color][/font_size][/center]";
     }
 
-    // Label helpers
-
-    // Called by debug_server via reflection to force-show the tooltip.
+    // Debug: Invoked via reflection by the debug server to force the tooltip on screen
     private static void ForceShowTip()
     {
         if (_widgetRoot == null || !GodotObject.IsInstanceValid(_widgetRoot)) return;
@@ -303,12 +293,9 @@ public static class TopBarPotionChancePatch
         catch (Exception e) { ModLog.Error("TryLoadTexture", e); return null; }
     }
 
-    // ── Math ──────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Probability of at least one potion dropping in the next <paramref name="n"/>
-    /// combats. Assumes a miss in each prior combat (+0.10 per miss).
-    /// </summary>
+    // Probability of at least one potion drop across the next n combats.
+    // Each prior combat is assumed to have missed, which adds +0.10 to
+    // the drop chance for the next roll.
     private static float CumulativeDropChance(float current, int n)
     {
         float probNone = 1f;
@@ -323,8 +310,7 @@ public static class TopBarPotionChancePatch
 
     private static string ColorHex(Color c) => $"{c.R8:X2}{c.G8:X2}{c.B8:X2}";
 
-    // Color gradient
-
+    // Color gradient sampled to color the percentage label
     private static readonly (float stop, Color color)[] GradientStops =
     {
         (0.00f, new Color("721010")),

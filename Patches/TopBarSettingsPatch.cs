@@ -63,7 +63,7 @@ public static class TopBarSettingsPatch
             if (_topBar == null) return;
             _cardsThisTurn++;
             _cardsThisCombat++;
-            DtsRunData.CardsThisRun++;
+            DtsRunData.IncrementCardsThisRun();
         }
         catch (Exception e) { ModLog.Error("TopBarSettingsPatch.OnAfterCardPlayed", e); }
     }
@@ -76,7 +76,7 @@ public static class TopBarSettingsPatch
         {
             if (_topBar == null || side != CombatSide.Player) return;
             _turnsThisCombat++;
-            DtsRunData.TurnsThisRun++;
+            DtsRunData.IncrementTurnsThisRun();
             _cardsThisTurn = 0;
         }
         catch (Exception e) { ModLog.Error("TopBarSettingsPatch.OnAfterTurnEnd", e); }
@@ -86,12 +86,21 @@ public static class TopBarSettingsPatch
     [HarmonyPostfix]
     private static void OnAfterCombatEnd()
     {
+        // Stats persist through the reward screen so the player can still
+        // read last-combat numbers while picking rewards. The reset runs
+        // in OnBeforeCombatStart when the next fight actually begins.
+    }
+
+    [HarmonyPatch(typeof(Hook), nameof(Hook.BeforeCombatStart))]
+    [HarmonyPostfix]
+    private static void OnBeforeCombatStart()
+    {
         try
         {
             if (_topBar == null) return;
             _cardsThisTurn = _cardsThisCombat = _turnsThisCombat = 0;
         }
-        catch (Exception e) { ModLog.Error("TopBarSettingsPatch.OnAfterCombatEnd", e); }
+        catch (Exception e) { ModLog.Error("TopBarSettingsPatch.OnBeforeCombatStart", e); }
     }
 
     [HarmonyPatch(typeof(NTopBarPauseButton), "OnFocus")]
@@ -105,10 +114,11 @@ public static class TopBarSettingsPatch
             int turn = _turnsThisCombat + 1;
             string actName = _runState?.Act.Title.GetFormattedText() ?? "Run";
             _tip.Show(_pauseButton, "Settings  (Esc)", BuildBbcode(turn), minWidth: 460f);
-            // Show act name as a standalone tooltip directly below the stats tooltip.
-            // Put act name in the body  so the RTL layout (ExpandFill +
-            // CustomMinimumSize) guarantees it is centered in the full 460px width.
-            // Empty title hides the title bar so the box is a compact single-line panel.
+            // Standalone act-name tip stacked below the stats tip. Putting
+            // the name in the body lets the inner RTL (ExpandFill +
+            // CustomMinimumSize) center it across the full 460 px width.
+            // An empty title hides the title bar so the panel is a single
+            // compact line.
             string actBbcode = $"[center][font_size=20][b][color=#E8C840]{actName}[/color][/b][/font_size][/center]";
             _actTip.Show(_pauseButton, "", actBbcode, minWidth: 460f, yOffset: _tip.Height + 8f);
         }
@@ -124,8 +134,10 @@ public static class TopBarSettingsPatch
         float avgCombat = currentTurn > 0 ? (float)_cardsThisCombat / currentTurn : 0f;
         float avgRun    = (float)DtsRunData.CardsThisRun / Math.Max(1, DtsRunData.TurnsThisRun);
         const string k = "#7A8FA8", v = "#FFF6E2";
-        // 2 NBSP on each side of value cells to force column width, prevents merging
-        // NBSP between "Turn" and the number prevents word-wrap inside the header cell
+        // Two NBSPs on each side of every value cell force a stable
+        // column width and prevent neighbouring cells from merging. The
+        // NBSP between "Turn" and the number stops the header from
+        // wrapping on a narrow viewport.
         const string p = "\u00A0\u00A0";
 
         string header =
@@ -138,7 +150,7 @@ public static class TopBarSettingsPatch
             "\n[table=4]" +
             header +
             DataRow($"[color={k}]Cards played[/color]", _cardsThisTurn.ToString(), _cardsThisCombat.ToString(), DtsRunData.CardsThisRun.ToString(), v, p) +
-            DataRow($"[color={k}]Avg per turn[/color]",  $"{_cardsThisTurn}", $"{avgCombat:F1}", $"{avgRun:F1}", v, p) +
+            DataRow($"[color={k}]Avg per turn[/color]",  "-", $"{avgCombat:F1}", $"{avgRun:F1}", v, p) +
             "[/table]";
     }
 

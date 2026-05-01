@@ -4,16 +4,11 @@ using DisplayTheSpire.Logging;
 
 namespace DisplayTheSpire.UI;
 
-/// <summary>
-/// Scene-tree utilities for NTopBar patches.
-/// </summary>
 internal static class TopBarHelper
 {
-    /// <summary>
-    /// Finds the first direct or recursive child of <paramref name="root"/> with the
-    /// given <paramref name="name"/> and returns it as a <see cref="Control"/>.
-    /// Returns <c>null</c> if not found or if the node is not a Control.
-    /// </summary>
+    // Recursive child lookup that returns null when the node is missing
+    // or is not a Control. Wraps Node.FindChild to swallow Godot exceptions
+    // raised during scene-tree teardown.
     public static Control? FindControl(Node root, string name)
     {
         try

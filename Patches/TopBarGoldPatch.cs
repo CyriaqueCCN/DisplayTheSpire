@@ -5,6 +5,8 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.sts2.Core.Nodes.TopBar;
+using MegaCrit.Sts2.Core.Entities.Ascension;
+using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Runs;
 using DisplayTheSpire.Logging;
@@ -19,17 +21,33 @@ public static class TopBarGoldPatch
     private static NTopBarGold? _goldButton;
     private static readonly DtsNativeTip _tip = new();
 
-    // Base prices
+    // Base shop prices.
+    //
+    // Cards (MerchantCardEntry.GetCost) switch on CardRarity to 50/75/150.
+    // Colorless cards are multiplied by 1.15 (rounded). CalcCost applies
+    // a per-shop variance of Rng.NextFloat(0.95f, 1.05f), and on-sale
+    // entries are halved after that. The Colorless surcharge and the
+    // sale discount are not surfaced here because both are per-shop
+    // random and the tooltip is pre-shop guidance, not a live quote.
+    //
+    // Potions (MerchantPotionEntry.GetCost) switch on PotionRarity to
+    // 50/75/100 with the same 0.95-1.05 variance band. The constant
+    // below is reused; if a future game patch diverges them, split this
+    // into a separate PotionVariance.
+    //
+    // Relics (MerchantRelicEntry) read RelicModel.MerchantCost. Defaults
+    // are Common=175, Uncommon=225, Rare=275, Shop=200; subclasses can
+    // override. Variance is wider here at 0.85-1.15.
     private const float CardCommon    = 50f;
     private const float CardUncommon  = 75f;
     private const float CardRare      = 150f;
     private const float PotionCommon  = 50f;
     private const float PotionUncommon = 75f;
     private const float PotionRare    = 100f;
-    private const float RelicCommon   = 200f;
-    private const float RelicUncommon = 250f;
-    private const float RelicRare     = 300f;
-    private const float CardVariance  = 0.05f;
+    private const float RelicCommon   = 175f;
+    private const float RelicUncommon = 225f;
+    private const float RelicRare     = 275f;
+    private const float CardVariance  = 0.05f;   // cards and potions
     private const float RelicVariance = 0.15f;
 
     [HarmonyPatch(typeof(NTopBar), nameof(NTopBar.Initialize))]
@@ -79,17 +97,33 @@ public static class TopBarGoldPatch
         bool hasCou = player.Relics.Any(r => r is TheCourier);
         float mult  = (hasMem ? 0.5f : 1f) * (hasCou ? 0.8f : 1f);
 
-        int removal = (int)((75 + 25 * player.ExtraFields.CardShopRemovalsUsed) * mult);
+        // Card removal price. The game scales it with Inflation:
+        //     BaseCost      = GetValueIfAscension(Inflation, 100, 75)
+        //     PriceIncrease = GetValueIfAscension(Inflation, 50, 25)
+        //     _cost         = BaseCost + PriceIncrease * CardShopRemovalsUsed
+        bool inflation = _runState!.AscensionLevel >= (int)AscensionLevel.Inflation;
+        int  baseCost  = inflation ? 100 : 75;
+        int  priceStep = inflation ?  50 : 25;
+        int removal = (int)((baseCost + priceStep * player.ExtraFields.CardShopRemovalsUsed) * mult);
+
+        // Run modifiers can veto card removal entirely (e.g. the Hoarder
+        // daily modifier overrides ShouldAllowMerchantCardRemoval to
+        // false). The merchant gates the removal button on the same
+        // hook, so showing a price when removal is denied would mislead.
+        // ShouldAllowMerchantCardRemoval iterates every hook listener
+        // and short-circuits on the first false, so any future modifier,
+        // relic or power that vetoes removal is covered automatically.
+        bool removalAllowed = Hook.ShouldAllowMerchantCardRemoval(_runState!, player);
 
         // Rarity header colors match the game's card frame palette
-        const string rarHdr = "#E8C840"; // gold - rare frame
-        const string uncHdr = "#3080E8"; // blue - uncommon frame
-        const string comHdr = "#C8C8C8"; // light gray - common tier
+        const string rarHdr = "#E8C840"; // rare frame
+        const string uncHdr = "#3080E8"; // uncommon frame
+        const string comHdr = "#C8C8C8"; // common tier
         const string k = "#7A8FA8";
         const string v = "#FFF6E2";
         string remColor = removal <= gold ? v : k;
 
-        // 2 NBSP each side on every value cell -> consistent column padding
+        // Two NBSPs on each side of every value cell give consistent column padding
         const string p = "\u00A0\u00A0";
 
         var sb = new System.Text.StringBuilder();
@@ -103,9 +137,12 @@ public static class TopBarGoldPatch
         sb.Append(PriceRow($"[color=#E8C840]Potions[/color]", PotionCommon, PotionUncommon, PotionRare, CardVariance,  mult, gold, p));
         sb.Append(PriceRow($"[color=#60C8A8]Relics[/color]",  RelicCommon,  RelicUncommon,  RelicRare,  RelicVariance, mult, gold, p));
         sb.Append("[/table]");
-        sb.Append($"\n\n[font_size=11][color={k}]Card Removal:  [/color][color={remColor}]{removal}g[/color][/font_size]");
-        if (hasMem) sb.Append($"\n[font_size=11][color=#60C8A8]Membership Card  −50%[/color][/font_size]");
-        if (hasCou) sb.Append($"\n[font_size=11][color=#60C8A8]The Courier  −20%[/color][/font_size]");
+        if (removalAllowed)
+            sb.Append($"\n\n[font_size=11][color={k}]Card Removal:  [/color][color={remColor}]{removal}g[/color][/font_size]");
+        else
+            sb.Append($"\n\n[font_size=11][color={k}]Run modifiers prevent card removal.[/color][/font_size]");
+        if (hasMem) sb.Append($"\n[font_size=11][color=#60C8A8]Membership Card  -50%[/color][/font_size]");
+        if (hasCou) sb.Append($"\n[font_size=11][color=#60C8A8]The Courier  -20%[/color][/font_size]");
         return sb.ToString();
     }
 
@@ -128,7 +165,7 @@ public static class TopBarGoldPatch
     {
         int min = (int)(base_ * (1f - variance) * mult);
         int max = (int)(base_ * (1f + variance) * mult);
-        return $"{min}\u2013{max}";
+        return $"{min}-{max}";
     }
 
     private static string AffordColor(float base_, float variance, float mult, int gold)
