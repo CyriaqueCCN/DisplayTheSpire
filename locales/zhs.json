@@ -1,0 +1,64 @@
+{
+  "tip.settings.title":          "设置（ESC）",
+  "tip.map.title":                "下一处未知节点（M）",
+  "tip.deck.title":               "卡牌奖励几率（D）",
+  "tip.gold.title":               "商店价格",
+  "tip.potion.title":             "药水掉落几率",
+  "tip.ascension.title":          "进阶 {0}",
+
+  "rarity.common":                "普通",
+  "rarity.uncommon":              "罕见",
+  "rarity.rare":                  "稀有",
+
+  "settings.run":                 "本局",
+  "settings.run_label":           "本局",
+  "settings.combat":              "战斗",
+  "settings.turn_n":              "第 {0} 回合",
+  "settings.cards_played":        "出牌数",
+  "settings.avg_per_turn":        "每回合平均",
+
+  "map.event":                    "事件",
+  "map.monster":                  "敌人",
+  "map.treasure":                 "宝箱",
+  "map.shop":                     "商人",
+
+  "deck.col.normal":              "普通战斗",
+  "deck.col.elite":               "精英",
+
+  "gold.row.cards":               "牌",
+  "gold.row.potions":             "药水",
+  "gold.row.relics":              "遗物",
+  "gold.removal_label":           "卡牌移除：",
+  "gold.amount_g":                "{0}金币",
+  "gold.removal_blocked":         "本局调整禁用了卡牌移除。",
+  "gold.membership_card":         "会员卡  -50%",
+  "gold.the_courier":             "送货员  -20%",
+
+  "potion.next_fights_row":       "未来 {0} 场战斗",
+  "potion.dropped_this_run":      "本局已掉落",
+  "potion.elite_bonus":           "精英房间在掷骰时额外加 [color=#FFF6E2]+12.5%[/color]",
+  "potion.guaranteed_by":         "由 [color=#FFF6E2]{0}[/color] 保证掉落",
+  "potion.guaranteed_generic":    "每场战斗均保证掉落",
+
+  "event_overview.title":         "事件总览",
+  "event_overview.shared":        "通用事件",
+  "event_overview.current_act":   "当前阶段：{0}",
+  "event_overview.act_n":         "阶段 {0}",
+  "event_overview.act_named":     "阶段 {0}：{1}",
+
+  "event.options_header":         "选项",
+  "event.outcome_section":        "[结果：{0}]",
+  "event.badge.combat":           "战斗事件",
+  "event.badge.ancient":          "先古",
+  "event.status.seen":            "已经遭遇过此事件",
+  "event.status.missed":          "此事件已无法再遭遇",
+  "event.status.may_encounter":   "此事件可能会遭遇",
+  "event.status.locked":          "此事件的前置条件未满足",
+
+  "event.relic_trader.owned_var": "你的一件可交易遗物",
+  "event.relic_trader.new_var":   "一件随机的新遗物（普通 50%，罕见 33%，稀有 17%）",
+
+  "event.desc.fake_merchant":     "[color=#E8C840]商人？？？[/color] 是一名伪装的商人，以 [color=#E8C840]50 金币[/color] 出售伪造遗物。九件可能赝品中会出现六件：真实遗物的山寨版本。\n\n[color=#7A8FA8]第二阶段及之后，仅限单人。需要 100 金币以上才能进入。[/color]",
+  "event.desc.relic_trader":      "用你库存中的 [color=#E8C840]三件随机可交易遗物[/color] 之一，换取交换商任选的 [color=#E8C840]一件随机新遗物[/color]。你选择交出哪一件，替代品则盲抽自遗物池。\n\n[color=#7A8FA8]第二阶段及之后。需要 5 件以上可交易遗物。[/color]",
+  "event.desc.ranwid":            "长者兰伟德以一件新遗物换取以下三种奉献之一：\n  - 给他 [color=#E8C840]一瓶随机药水[/color] － 获得 [color=#E8C840]1 件遗物[/color]。\n  - 给他 [color=#E8C840]100 金币[/color] － 获得 [color=#E8C840]1 件遗物[/color]。\n  - 给他 [color=#E8C840]一件随机可交易遗物[/color] － 获得 [color=#E8C840]2 件遗物[/color]。\n\n交出的药水和遗物从你的库存中随机抽取。在你离开事件之前，药水无法丢弃。\n\n[color=#7A8FA8]第二阶段及之后。需要 100 金币以上、1 瓶以上药水以及 1 件以上可交易遗物。[/color]"
+}

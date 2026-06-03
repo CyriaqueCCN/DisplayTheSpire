@@ -47,7 +47,7 @@ public static class TopBarDeckPatch
         {
             NHoverTipSet.Remove(__instance);
             if (_runState == null || _deckButton == null) return;
-            _tip.Show(_deckButton, "Card Reward Odds  (D)", BuildBbcode(), minWidth: 360f);
+            _tip.Show(_deckButton, DtsLoc.Tr("tip.deck.title"), BuildBbcode(), minWidth: 360f);
         }
         catch (Exception e) { ModLog.Error("TopBarDeckPatch.AfterDeckFocus", e); }
     }
@@ -90,10 +90,10 @@ public static class TopBarDeckPatch
         const string p = "\u00A0\u00A0\u00A0";
         return
             "\n[table=3]" +
-            $"[cell][/cell][cell][center][color={hdrHex}]{p}Normal{p}[/color][/center][/cell][cell][center][color={hdrHex}]{p}Elite{p}[/color][/center][/cell]" +
-            TwoCol($"[color={rareHex}]Rare[/color]",   regRare,     eliRare,     rareHex, p) +
-            TwoCol($"[color={ucHex}]Uncommon[/color]", regUncommon, eliUncommon, ucHex,   p) +
-            TwoCol($"[color={cmHex}]Common[/color]",   regCommon,   eliCommon,   cmHex,   p) +
+            $"[cell][/cell][cell][center][color={hdrHex}]{p}{DtsLoc.Tr("deck.col.normal")}{p}[/color][/center][/cell][cell][center][color={hdrHex}]{p}{DtsLoc.Tr("deck.col.elite")}{p}[/color][/center][/cell]" +
+            TwoCol($"[color={rareHex}]{DtsLoc.Tr("rarity.rare")}[/color]",       regRare,     eliRare,     rareHex, p) +
+            TwoCol($"[color={ucHex}]{DtsLoc.Tr("rarity.uncommon")}[/color]",     regUncommon, eliUncommon, ucHex,   p) +
+            TwoCol($"[color={cmHex}]{DtsLoc.Tr("rarity.common")}[/color]",       regCommon,   eliCommon,   cmHex,   p) +
             "[/table]";
     }
 

@@ -16,8 +16,9 @@ namespace DisplayTheSpire.UI;
 // parented to the modal's full-screen OverlayLayer.
 //
 // Options resolve through reflection on GenerateInitialOptions when safe;
-// custom-layout events that pull from RNG or the relic pool fall through
-// to a LocTable read instead. Game color tags are converted to Godot
+// side-effecting events (the one Custom-layout event plus the Default-
+// layout events on the deny-list below) fall through to a LocTable read
+// instead. Game color tags are converted to Godot
 // [color=#HEX], animation tags are stripped, [font_size] is clamped to
 // roughly 50 to 150 percent of the base, and [img] is removed.
 internal static class EventTooltip
@@ -50,11 +51,12 @@ internal static class EventTooltip
     // reads as a sub-note of the option above it.
     private static readonly Color LockedColor = DtsTheme.FutureEvent;
 
-    // Per-event variable overrides. Some Custom-layout events have
-    // CanonicalVars whose ToString() returns empty until the event's own
-    // CalculateVars runs, but invoking CalculateVars has gameplay-mutating
-    // side effects (e.g. RelicTrader.NewRelics pulls from
-    // SharedRelicGrabBag, removing relics from the run-long drop pool).
+    // Per-event variable overrides. Some events have CanonicalVars whose
+    // ToString() returns empty until the event's own CalculateVars runs,
+    // but invoking CalculateVars has gameplay-mutating side effects (e.g.
+    // RelicTrader.NewRelics pulls from the relic pool via
+    // RelicFactory.PullNextRelicFromFront, removing relics from the
+    // run-long drop pool).
     // For those events the placeholders render as semantic descriptions
     // of the trade structure rather than ellipses. RelicTrader's
     // NewRelics uses RelicFactory.PullNextRelicFromFront(player), which
@@ -66,23 +68,30 @@ internal static class EventTooltip
     // Each of the three offered relics is an independent roll. The
     // PullFromFront fallthrough to a higher rarity when a deque is
     // empty is a rare late-run edge case and is ignored here.
-    private const string RelicTraderRarities = " (50% Common, 33% Uncommon, 17% Rare)";
-
-    private static readonly IReadOnlyDictionary<string, string> _relicTraderOverrides =
-        new Dictionary<string, string>(StringComparer.Ordinal)
+    // RelicTrader's six StringVars default to "" pre-CalculateVars.
+    // Render them as the localized "your tradable relic" /
+    // "random new relic + rarity table" placeholders so the option
+    // shape reads correctly without invoking CalculateVars (which
+    // would pull from SharedRelicGrabBag).
+    private static IReadOnlyDictionary<string, string> BuildRelicTraderOverrides()
+    {
+        string owned = DtsLoc.Tr("event.relic_trader.owned_var");
+        string novel = DtsLoc.Tr("event.relic_trader.new_var");
+        return new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["TopRelicOwned"]    = "one of your tradable relics",
-            ["TopRelicNew"]      = "a random new relic" + RelicTraderRarities,
-            ["MiddleRelicOwned"] = "one of your tradable relics",
-            ["MiddleRelicNew"]   = "a random new relic" + RelicTraderRarities,
-            ["BottomRelicOwned"] = "one of your tradable relics",
-            ["BottomRelicNew"]   = "a random new relic" + RelicTraderRarities,
+            ["TopRelicOwned"]    = owned,
+            ["TopRelicNew"]      = novel,
+            ["MiddleRelicOwned"] = owned,
+            ["MiddleRelicNew"]   = novel,
+            ["BottomRelicOwned"] = owned,
+            ["BottomRelicNew"]   = novel,
         };
+    }
 
     private static IReadOnlyDictionary<string, string>? GetTemplateOverrides(string eventId) =>
         eventId switch
         {
-            "RELIC_TRADER" => _relicTraderOverrides,
+            "RELIC_TRADER" => BuildRelicTraderOverrides(),
             _              => null,
         };
 
@@ -319,10 +328,12 @@ internal static class EventTooltip
 
         // Options. The reflection path on GenerateInitialOptions returns
         // EventOption objects with IsLocked / WillKillPlayer metadata.
-        // Custom-layout events (RelicTrader, RanwidTheElder, FakeMerchant)
-        // implement GenerateInitialOptions with gameplay-mutating side
-        // effects, so for those the LocTable path is used instead. That
-        // path only reads localization data and never touches the model.
+        // Side-effecting events -- FakeMerchant (the only Custom-layout
+        // event) plus the Default-layout events on the deny-list
+        // (RelicTrader, RanwidTheElder, Neow, ...) -- implement
+        // GenerateInitialOptions with gameplay-mutating side effects, so
+        // for those the LocTable path is used instead. That path only
+        // reads localization data and never touches the model.
         //
         // Templated placeholders that the event's own CalculateVars
         // would resolve are ellipsized by ResolveOrEllipsize; CalculateVars
@@ -341,7 +352,7 @@ internal static class EventTooltip
             if (locOpts.Count > 0)
             {
                 vbox.AddChild(MakeSeparator());
-                vbox.AddChild(MakeLocOptionsSection("OPTIONS", locOpts));
+                vbox.AddChild(MakeLocOptionsSection(DtsLoc.Tr("event.options_header"), locOpts));
             }
         }
 
@@ -403,39 +414,28 @@ internal static class EventTooltip
             || t.StartsWith("Placeholder", StringComparison.OrdinalIgnoreCase);
     }
 
-    // Hardcoded descriptions for events whose text lives in a custom
-    // UI scene rather than the events LocTable (InitialDescription
-    // returns "???" or a "Placeholder" stub).
-    private static string? GetHardcodedDescription(string eventId) => eventId switch
+    // Hardcoded descriptions for events whose standard LocString path
+    // yields no usable text: FakeMerchant (Custom layout, text lives in
+    // its bespoke UI scene, InitialDescription returns "???"/"Placeholder")
+    // and the two trader events (RelicTrader, RanwidTheElder) whose
+    // descriptions are template-only and skipped to avoid CalculateVars.
+    // FakeMerchant's hidden Foul Potion interaction is intentionally not
+    // described to keep the Easter-egg discovery mechanic intact.
+    private static string? GetHardcodedDescription(string eventId)
     {
-        // FakeMerchant has a hidden Foul Potion interaction (throw the
-        // potion to start a fight, then loot the unsold stock plus
-        // bonus gold and a unique relic). That's an Easter-egg
-        // discovery mechanic; mentioning it here or on the prereq line
-        // would tip players off about the alternate entry condition,
-        // so it is intentionally omitted.
-        "FAKE_MERCHANT" =>
-            "A disguised merchant selling counterfeit relics for [color=#E8C840]50 Gold[/color] each. " +
-            "Six of nine possible fake items are available: knock-off versions of real relics.\n\n" +
-            "[color=#7A8FA8]Act 2+, single-player only. Requires 100+ Gold to enter.[/color]",
-
-        "RELIC_TRADER" =>
-            "Trade one of [color=#E8C840]three random tradable relics[/color] from your inventory " +
-            "for a [color=#E8C840]random new relic[/color] of the trader's choosing. " +
-            "You pick which of your relics to offer; the replacement is pulled blind from the relic pool.\n\n" +
-            "[color=#7A8FA8]Act 2+. Requires 5+ tradable relics.[/color]",
-
-        "RANWID_THE_ELDER" =>
-            "Ranwid trades a new relic for one of three offerings:\n" +
-            "  - Give a [color=#E8C840]random potion[/color] - gain [color=#E8C840]1 relic[/color].\n" +
-            "  - Pay [color=#E8C840]100 Gold[/color] - gain [color=#E8C840]1 relic[/color].\n" +
-            "  - Give a [color=#E8C840]random tradable relic[/color] - gain [color=#E8C840]2 relics[/color].\n\n" +
-            "The potion and relic given up are chosen at random from your inventory. " +
-            "Potions cannot be discarded until you leave the event.\n\n" +
-            "[color=#7A8FA8]Act 2+. Requires 100+ Gold, 1+ potion, and 1+ tradable relic.[/color]",
-
-        _ => null,
-    };
+        string key = eventId switch
+        {
+            "FAKE_MERCHANT"    => "event.desc.fake_merchant",
+            "RELIC_TRADER"     => "event.desc.relic_trader",
+            "RANWID_THE_ELDER" => "event.desc.ranwid",
+            _                  => null!,
+        };
+        if (key == null) return null;
+        string s = DtsLoc.Tr(key);
+        // DtsLoc.Tr returns "[key]" for missing entries; treat that as
+        // absent so the standard LocString path is tried first.
+        return s.StartsWith("[") && s.EndsWith("]") ? null : s;
+    }
 
     // Default-layout event classes whose GenerateInitialOptions has
     // gameplay-mutating side effects. Calling them on hover would
@@ -443,19 +443,28 @@ internal static class EventTooltip
     // fields that the running event reads later, silently changing
     // the outcome the player gets when they actually pick the event.
     //
-    // Specific offences by class name:
+    // Specific offences by class name (verified against sts2.dll v0.103.3):
     //   ColorfulPhilosophers - Rng.NextInt + list.RemoveAt
     //   Darv                 - Rng.NextItem + UnstableShuffle + NextBool
+    //                          (also reached via the AncientEventModel branch)
     //   Neow                 - NextItem + NextBool branches + UnstableShuffle.Take(2)
     //   Nonupeipe            - list.UnstableShuffle(Rng)
     //   Orobas               - NextItem + NextFloat gate + 3x NextItem from pools
     //   Pael                 - 3x NextItem from OptionPool1/2/3
+    //   RanwidTheElder       - Rng.NextItem over Owner.Potions / tradable relics
+    //   RelicTrader          - OwnedRelics StableShuffle(Rng) + NewRelics
+    //                          RelicFactory.PullNextRelicFromFront x3 (pool pull)
     //   StoneOfAllTime       - mutates this.DrinkAndLiftPotion via NextItem
     //   Tanx                 - UnstableShuffle(Rng).Take(3)
     //   Tezcatara            - 3x NextItem across pools
     //   Vakuu                - 3x UnstableShuffle(Rng)
     //   WelcomeToWongos      - RelicFactory.PullNextRelicFromFront (pool corruption)
     //                          plus writes this.FeaturedItem
+    //
+    // RelicTrader and RanwidTheElder are Default layout (NOT Custom -- only
+    // FakeMerchant overrides LayoutType => Custom). They must be on this
+    // deny-list explicitly; the Custom check in TryGetReflectionOptions
+    // does not cover them.
     //
     // For these, the LocTable path is used instead. If a future game
     // patch adds new side-effecting events, extend this set.
@@ -468,6 +477,8 @@ internal static class EventTooltip
             "Nonupeipe",
             "Orobas",
             "Pael",
+            "RanwidTheElder",
+            "RelicTrader",
             "StoneOfAllTime",
             "Tanx",
             "Tezcatara",
@@ -478,18 +489,25 @@ internal static class EventTooltip
     private static IReadOnlyList<EventOption>? TryGetReflectionOptions(EventModel ev)
     {
         // Never invoke GenerateInitialOptions on a Custom-layout event.
-        // Those events own their full UI in a bespoke scene and their
-        // GenerateInitialOptions implementations have gameplay-mutating
-        // side effects that would fire silently on every hover:
-        //   RelicTrader pulls 3 relics from SharedRelicGrabBag
-        //     (removes them from the run-long drop pool).
-        //   RanwidTheElder advances the event's Rng via NextItem,
-        //     changing the potion or relic it asks for at run time.
-        // Calling CalculateVars afterwards would also spoil pre-pulled
-        // RNG choices. Hardcoded descriptions exist for these instead.
+        // FakeMerchant is the only Custom-layout event: it owns its full
+        // UI in a bespoke scene, so a hardcoded description is used and
+        // GenerateInitialOptions is never reflected into.
         if (ev.LayoutType == EventLayoutType.Custom) return null;
 
         // Default-layout deny-list: see _sideEffectingEventTypes above.
+        // This is what actually skips the side-effecting Default events
+        // such as RelicTrader (pulls 3 relics from the pool) and
+        // RanwidTheElder (advances the event Rng) -- both are Default
+        // layout, so the Custom check above does NOT catch them.
+        //
+        // Defense in depth: even without this list the overview is safe,
+        // because it shows canonical (immutable) ModelDb instances whose
+        // GenerateInitialOptions throws (AssertMutable, or a null
+        // base.Owner / base.Rng deref) before any RNG or pool mutation,
+        // and the reflection call below is wrapped in try/catch. The
+        // deny-list exists to skip that work cleanly and avoid logging an
+        // exception on every hover.
+        //
         // Match by GetType().Name (no namespace, no generic suffix; none
         // of the listed classes are generic) to avoid drift if events
         // get re-namespaced.
@@ -517,7 +535,7 @@ internal static class EventTooltip
     {
         var vbox = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         vbox.AddThemeConstantOverride("separation", 5);
-        vbox.AddChild(MakeLabel("OPTIONS", FontHeader, DtsTheme.KeyLabel));
+        vbox.AddChild(MakeLabel(DtsLoc.Tr("event.options_header"), FontHeader, DtsTheme.KeyLabel));
 
         foreach (var opt in options)
         {
@@ -759,11 +777,20 @@ internal static class EventTooltip
     {
         var vbox = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         vbox.AddThemeConstantOverride("separation", 5);
-        vbox.AddChild(MakeLabel("[" + page.PageId.Replace('_', ' ') + "]", FontHeader, DtsTheme.KeyLabel));
+        // Page IDs in events.json are keys (GOLD, POTION, RELIC,
+        // GRAB_POTIONS, etc.). They are not localized in the game's
+        // data, so we wrap them with a localized "Outcome" prefix
+        // and feed the underscore-flattened key as the format arg.
+        // English keeps the bracket-only form; Chinese (and any
+        // future locale) prepends a translated header so the bracket
+        // content is recognisable as an outcome marker.
+        vbox.AddChild(MakeLabel(
+            DtsLoc.Tr("event.outcome_section", page.PageId.Replace('_', ' ')),
+            FontHeader, DtsTheme.KeyLabel));
         if (!string.IsNullOrWhiteSpace(page.Desc))
             vbox.AddChild(MakeRtl(page.Desc, FontDesc, Width - 32f));
         if (page.Options.Count > 0)
-            vbox.AddChild(MakeLocOptionsSection("OPTIONS", page.Options));
+            vbox.AddChild(MakeLocOptionsSection(DtsLoc.Tr("event.options_header"), page.Options));
         return vbox;
     }
 
@@ -775,17 +802,17 @@ internal static class EventTooltip
 
         if (seen)
         {
-            text  = "This event was already encountered";
+            text  = DtsLoc.Tr("event.status.seen");
             color = DtsTheme.KeyLabel;
         }
         else if (isPast)
         {
-            text  = "This event cannot be encountered any more";
+            text  = DtsLoc.Tr("event.status.missed");
             color = DangerColor;
         }
         else if (isFuture)
         {
-            text  = "This event may be encountered";
+            text  = DtsLoc.Tr("event.status.may_encounter");
             color = DtsTheme.EliteYellow;
         }
         else
@@ -793,8 +820,8 @@ internal static class EventTooltip
             bool allowed = true;
             try { allowed = ev.IsAllowed(rs); } catch { }
             text  = allowed
-                ? "This event may be encountered"
-                : "Prerequisites for this event are not met";
+                ? DtsLoc.Tr("event.status.may_encounter")
+                : DtsLoc.Tr("event.status.locked");
             color = allowed ? DtsTheme.EliteYellow : DtsTheme.FutureEvent;
         }
 
@@ -812,8 +839,8 @@ internal static class EventTooltip
 
     private static Control MakeTypeBadge(EventLayoutType layout) => layout switch
     {
-        EventLayoutType.Combat  => MakeLabel("COMBAT EVENT", FontBadge, DangerColor),
-        EventLayoutType.Ancient => MakeLabel("ANCIENT",      FontBadge, DtsTheme.EliteYellow),
+        EventLayoutType.Combat  => MakeLabel(DtsLoc.Tr("event.badge.combat"),  FontBadge, DangerColor),
+        EventLayoutType.Ancient => MakeLabel(DtsLoc.Tr("event.badge.ancient"), FontBadge, DtsTheme.EliteYellow),
         _                       => MakeLabel(layout.ToString().ToUpperInvariant(), FontBadge, DtsTheme.KeyLabel),
     };
 

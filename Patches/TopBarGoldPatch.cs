@@ -79,7 +79,7 @@ public static class TopBarGoldPatch
         {
             NHoverTipSet.Remove(__instance);
             if (_runState == null || _goldButton == null) return;
-            _tip.Show(_goldButton, "Shop Prices", BuildBbcode(), minWidth: 460f);
+            _tip.Show(_goldButton, DtsLoc.Tr("tip.gold.title"), BuildBbcode(), minWidth: 460f);
         }
         catch (Exception e) { ModLog.Error("TopBarGoldPatch.AfterGoldFocus", e); }
     }
@@ -130,19 +130,19 @@ public static class TopBarGoldPatch
         sb.Append("\n[table=4]");
         sb.Append(
             $"[cell][/cell]" +
-            $"[cell][center][color={comHdr}]{p}Common{p}[/color][/center][/cell]" +
-            $"[cell][center][color={uncHdr}]{p}Uncommon{p}[/color][/center][/cell]" +
-            $"[cell][center][color={rarHdr}]{p}Rare{p}[/color][/center][/cell]");
-        sb.Append(PriceRow($"[color={v}]Cards[/color]",       CardCommon,   CardUncommon,   CardRare,   CardVariance,  mult, gold, p));
-        sb.Append(PriceRow($"[color=#E8C840]Potions[/color]", PotionCommon, PotionUncommon, PotionRare, CardVariance,  mult, gold, p));
-        sb.Append(PriceRow($"[color=#60C8A8]Relics[/color]",  RelicCommon,  RelicUncommon,  RelicRare,  RelicVariance, mult, gold, p));
+            $"[cell][center][color={comHdr}]{p}{DtsLoc.Tr("rarity.common")}{p}[/color][/center][/cell]" +
+            $"[cell][center][color={uncHdr}]{p}{DtsLoc.Tr("rarity.uncommon")}{p}[/color][/center][/cell]" +
+            $"[cell][center][color={rarHdr}]{p}{DtsLoc.Tr("rarity.rare")}{p}[/color][/center][/cell]");
+        sb.Append(PriceRow($"[color={v}]{DtsLoc.Tr("gold.row.cards")}[/color]",            CardCommon,   CardUncommon,   CardRare,   CardVariance,  mult, gold, p));
+        sb.Append(PriceRow($"[color=#E8C840]{DtsLoc.Tr("gold.row.potions")}[/color]",      PotionCommon, PotionUncommon, PotionRare, CardVariance,  mult, gold, p));
+        sb.Append(PriceRow($"[color=#60C8A8]{DtsLoc.Tr("gold.row.relics")}[/color]",       RelicCommon,  RelicUncommon,  RelicRare,  RelicVariance, mult, gold, p));
         sb.Append("[/table]");
         if (removalAllowed)
-            sb.Append($"\n\n[font_size=11][color={k}]Card Removal:  [/color][color={remColor}]{removal}g[/color][/font_size]");
+            sb.Append($"\n\n[font_size=11][color={k}]{DtsLoc.Tr("gold.removal_label")}  [/color][color={remColor}]{DtsLoc.Tr("gold.amount_g", removal)}[/color][/font_size]");
         else
-            sb.Append($"\n\n[font_size=11][color={k}]Run modifiers prevent card removal.[/color][/font_size]");
-        if (hasMem) sb.Append($"\n[font_size=11][color=#60C8A8]Membership Card  -50%[/color][/font_size]");
-        if (hasCou) sb.Append($"\n[font_size=11][color=#60C8A8]The Courier  -20%[/color][/font_size]");
+            sb.Append($"\n\n[font_size=11][color={k}]{DtsLoc.Tr("gold.removal_blocked")}[/color][/font_size]");
+        if (hasMem) sb.Append($"\n[font_size=11][color=#60C8A8]{DtsLoc.Tr("gold.membership_card")}[/color][/font_size]");
+        if (hasCou) sb.Append($"\n[font_size=11][color=#60C8A8]{DtsLoc.Tr("gold.the_courier")}[/color][/font_size]");
         return sb.ToString();
     }
 

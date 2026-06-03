@@ -59,12 +59,11 @@ internal sealed class DtsModal
 
         // Close on left-click outside the panel or on Esc
         //
-        // Esc lives in GuiInput rather than _Input because _Input traverses
-        // root to leaf, so a top-level pause handler would consume the key
-        // before our deeply nested node ever sees it. GuiInput runs in the
-        // GUI phase, ahead of any _Input handler. While the backdrop holds
-        // keyboard focus it captures all key events here, and calling
-        // SetInputAsHandled would block the pause menu entirely.
+        // Esc lives in GuiInput because the game's pause/cancel action is
+        // handled in NInputManager._UnhandledInput, which runs AFTER the
+        // GUI input phase. While the backdrop holds keyboard focus it
+        // captures Esc here first; AcceptEvent (below) then marks it
+        // handled so the pause handler never fires for that keystroke.
         _backdrop.GuiInput += (InputEvent @event) =>
         {
             if (@event is InputEventMouseButton mb && mb.Pressed
@@ -76,8 +75,12 @@ internal sealed class DtsModal
             if (@event is InputEventKey key && key.Pressed && !key.Echo
                 && key.PhysicalKeycode == Key.Escape)
             {
-                // Close but do not consume the event: let it propagate to
-                // _Input so the game's pause handler can also react.
+                // Esc dismisses the overview only. AcceptEvent marks the
+                // key handled so it does not reach the game's pause
+                // handler (NInputManager._UnhandledInput runs after the
+                // GUI phase), meaning a single Esc closes the modal
+                // without also opening the pause menu.
+                _backdrop.AcceptEvent();
                 Close();
             }
         };

@@ -1,0 +1,64 @@
+{
+  "tip.settings.title":          "Settings  (Esc)",
+  "tip.map.title":                "Next Unknown Node  (M)",
+  "tip.deck.title":               "Card Reward Odds  (D)",
+  "tip.gold.title":               "Shop Prices",
+  "tip.potion.title":             "Potion Drop Chance",
+  "tip.ascension.title":          "Ascension {0}",
+
+  "rarity.common":                "Common",
+  "rarity.uncommon":               "Uncommon",
+  "rarity.rare":                   "Rare",
+
+  "settings.run":                  "Run",
+  "settings.run_label":            "Run",
+  "settings.combat":               "Combat",
+  "settings.turn_n":               "Turn {0}",
+  "settings.cards_played":         "Cards played",
+  "settings.avg_per_turn":         "Avg per turn",
+
+  "map.event":                     "Event",
+  "map.monster":                   "Monster",
+  "map.treasure":                  "Treasure",
+  "map.shop":                      "Shop",
+
+  "deck.col.normal":               "Normal",
+  "deck.col.elite":                "Elite",
+
+  "gold.row.cards":                "Cards",
+  "gold.row.potions":              "Potions",
+  "gold.row.relics":               "Relics",
+  "gold.removal_label":            "Card Removal:",
+  "gold.amount_g":                 "{0}g",
+  "gold.removal_blocked":          "Run modifiers prevent card removal.",
+  "gold.membership_card":          "Membership Card  -50%",
+  "gold.the_courier":              "The Courier  -20%",
+
+  "potion.next_fights_row":        "Next {0} fights",
+  "potion.dropped_this_run":       "Dropped this run",
+  "potion.elite_bonus":            "Elite rooms add [color=#FFF6E2]+12.5%[/color] at roll time",
+  "potion.guaranteed_by":          "Guaranteed by [color=#FFF6E2]{0}[/color]",
+  "potion.guaranteed_generic":     "Drops are guaranteed every combat",
+
+  "event_overview.title":          "Event Overview",
+  "event_overview.shared":         "Shared Events",
+  "event_overview.current_act":    "Current Act: {0}",
+  "event_overview.act_n":          "Act {0}",
+  "event_overview.act_named":      "Act {0}: {1}",
+
+  "event.options_header":          "OPTIONS",
+  "event.outcome_section":         "[{0}]",
+  "event.badge.combat":            "COMBAT EVENT",
+  "event.badge.ancient":           "ANCIENT",
+  "event.status.seen":             "This event was already encountered",
+  "event.status.missed":           "This event cannot be encountered any more",
+  "event.status.may_encounter":    "This event may be encountered",
+  "event.status.locked":           "Prerequisites for this event are not met",
+
+  "event.relic_trader.owned_var":  "one of your tradable relics",
+  "event.relic_trader.new_var":    "a random new relic (50% Common, 33% Uncommon, 17% Rare)",
+
+  "event.desc.fake_merchant":      "[color=#E8C840]The Merchant???[/color] is a disguised vendor selling counterfeit relics for [color=#E8C840]50 Gold[/color] each. Six of nine possible fake items are available: knock-off versions of real relics.\n\n[color=#7A8FA8]Act 2+, single-player only. Requires 100+ Gold to enter.[/color]",
+  "event.desc.relic_trader":       "Trade one of [color=#E8C840]three random tradable relics[/color] from your inventory for a [color=#E8C840]random new relic[/color] of the trader's choosing. You pick which of your relics to offer; the replacement is pulled blind from the relic pool.\n\n[color=#7A8FA8]Act 2+. Requires 5+ tradable relics.[/color]",
+  "event.desc.ranwid":             "Ranwid trades a new relic for one of three offerings:\n  - Give a [color=#E8C840]random potion[/color] - gain [color=#E8C840]1 relic[/color].\n  - Pay [color=#E8C840]100 Gold[/color] - gain [color=#E8C840]1 relic[/color].\n  - Give a [color=#E8C840]random tradable relic[/color] - gain [color=#E8C840]2 relics[/color].\n\nThe potion and relic given up are chosen at random from your inventory. Potions cannot be discarded until you leave the event.\n\n[color=#7A8FA8]Act 2+. Requires 100+ Gold, 1+ potion, and 1+ tradable relic.[/color]"
+}

@@ -2,6 +2,7 @@ using System;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
 using DisplayTheSpire.Logging;
+using DisplayTheSpire.UI;
 
 namespace DisplayTheSpire;
 
@@ -16,6 +17,8 @@ public static class ModInit
         try
         {
             _harmony.PatchAll(typeof(ModInit).Assembly);
+            DtsLoc.Initialize();
+            DtsRunData.Initialize();
             ModLog.Info("Initialized");
         }
         catch (Exception e)

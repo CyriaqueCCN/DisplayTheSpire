@@ -78,7 +78,7 @@ public static class TopBarMapPatch
         {
             NHoverTipSet.Remove(__instance);
             if (_runState == null || _mapButton == null) return;
-            _tip.Show(_mapButton, "Next Unknown Node  (M)", BuildBbcode());
+            _tip.Show(_mapButton, DtsLoc.Tr("tip.map.title"), BuildBbcode());
         }
         catch (Exception e) { ModLog.Error("TopBarMapPatch.AfterMapFocus", e); }
     }
@@ -100,10 +100,10 @@ public static class TopBarMapPatch
         // label-vs-value length.
         return
             "\n" +
-            Row("[color=#8888CC]Event[/color]",    ev,  "#8888CC")   + "\n" +
-            Row("[color=#CC4040]Monster[/color]",  mon, "#FFF6E2")   + "\n" +
-            Row("[color=#E8C840]Treasure[/color]", tre, "#E8C840")   + "\n" +
-            Row("[color=#60C8A8]Shop[/color]",     shp, "#60C8A8");
+            Row($"[color=#8888CC]{DtsLoc.Tr("map.event")}[/color]",    ev,  "#8888CC") + "\n" +
+            Row($"[color=#CC4040]{DtsLoc.Tr("map.monster")}[/color]",  mon, "#FFF6E2") + "\n" +
+            Row($"[color=#E8C840]{DtsLoc.Tr("map.treasure")}[/color]", tre, "#E8C840") + "\n" +
+            Row($"[color=#60C8A8]{DtsLoc.Tr("map.shop")}[/color]",     shp, "#60C8A8");
     }
 
     private static string Row(string label, int pct, string valColor)

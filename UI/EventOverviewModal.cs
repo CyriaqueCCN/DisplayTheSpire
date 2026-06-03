@@ -57,7 +57,7 @@ internal static class EventOverviewModal
             float panelW = screen.X * 2f / 3f;
             float panelH = screen.Y * 2f / 3f;
 
-            var modal   = new DtsModal("Event Overview", panelW, panelH);
+            var modal   = new DtsModal(DtsLoc.Tr("event_overview.title"), panelW, panelH);
             var overlay = modal.OverlayLayer;   // backdrop, used to host tooltips
 
             var rows = new VBoxContainer
@@ -72,13 +72,13 @@ internal static class EventOverviewModal
             string curActName = runState.Act.Title.GetFormattedText();
             rows.AddChild(BuildRow(
                 BuildSection(
-                    $"Current Act: {curActName}",
+                    DtsLoc.Tr("event_overview.current_act", curActName),
                     SortByTitle(runState.Act.AllEvents),
                     visited,
                     isFuture: false, isPast: false,
                     rs, overlay),
                 BuildSection(
-                    "Shared Events",
+                    DtsLoc.Tr("event_overview.shared"),
                     SortByTitle(ModelDb.AllSharedEvents),
                     visited,
                     isFuture: false, isPast: false,
@@ -136,7 +136,7 @@ internal static class EventOverviewModal
         catch (Exception ex)
         {
             ModLog.Error("EventOverviewModal.Show", ex);
-            var fallback = new DtsModal("Event Overview", 400f, 120f);
+            var fallback = new DtsModal(DtsLoc.Tr("event_overview.title"), 400f, 120f);
             fallback.Show(host);
             return fallback;
         }
@@ -170,8 +170,8 @@ internal static class EventOverviewModal
     {
         int num = slotIdx + 1;
         return slotIdx <= curIdx
-            ? $"Act {num}: {act.Title.GetFormattedText()}"
-            : $"Act {num}";
+            ? DtsLoc.Tr("event_overview.act_named", num, act.Title.GetFormattedText())
+            : DtsLoc.Tr("event_overview.act_n", num);
     }
 
     // Two equal-width columns separated by a 1px vertical rule.

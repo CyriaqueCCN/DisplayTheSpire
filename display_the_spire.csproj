@@ -6,7 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>display_the_spire</AssemblyName>
     <RootNamespace>DisplayTheSpire</RootNamespace>
-    <Version>0.7.11</Version>
+    <Version>0.7.23</Version>
     <NoWarn>CS0436;CS0618</NoWarn>
     <!-- Default STS2DataDir: standard Steam install on Windows.
          Override on the command line if the game is installed elsewhere:

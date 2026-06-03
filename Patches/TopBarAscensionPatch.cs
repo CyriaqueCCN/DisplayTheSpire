@@ -70,7 +70,7 @@ public static class TopBarAscensionPatch
     [HarmonyPostfix]
     private static void AfterPortraitUnhovered() { try { _tip.Hide(); } catch { } }
 
-    private static string BuildTitle(int level) => $"Ascension {level}";
+    private static string BuildTitle(int level) => DtsLoc.Tr("tip.ascension.title", level);
 
     private static string BuildBbcode(int maxLevel)
     {
